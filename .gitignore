@@ -1,14 +1,22 @@
-# Python
+# Python virtual environments
+venv/
 .venv/
+backend/venv/
+backend/.venv/
+
+# Python cache
 __pycache__/
 *.pyc
 
+# Node
+node_modules/
+frontend/node_modules/
+
+# Build
+dist/
+
 # Database
 *.db
-
-# React
-node_modules/
-dist/
 
 # Environment
 .env
