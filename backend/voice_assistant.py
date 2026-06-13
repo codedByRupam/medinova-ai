@@ -1,5 +1,5 @@
 import speech_recognition as sr
-import pyttsx3
+#import pyttsx3
 import sounddevice as sd
 from scipy.io.wavfile import write
 from langdetect import detect
