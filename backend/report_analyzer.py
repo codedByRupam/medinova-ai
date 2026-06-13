@@ -1,166 +1,66 @@
 import fitz
-import ollama
+import os
 
 
-
-
-# =========================
-# PDF TEXT EXTRACTION
-# =========================
-
-
-def extract_pdf_text(file_path):
-
+def extract_text(pdf_path):
 
     text = ""
 
+    doc = fitz.open(pdf_path)
 
+    for page in doc:
+        text += page.get_text()
+
+    doc.close()
+
+    return text
+
+
+
+def analyze_report(pdf_path):
 
     try:
 
-
-        document = fitz.open(
-            file_path
-        )
+        text = extract_text(pdf_path)
 
 
+        if len(text) == 0:
 
-        for page in document:
-
-
-            text += page.get_text()
-
-
-
-        document.close()
+            return {
+                "status":"error",
+                "message":"No readable text found"
+            }
 
 
+        # Temporary AI analysis
+        # Later connect OpenAI/Gemini API here
 
-        return text
+        result = {
+
+            "summary":
+            "Medical report uploaded successfully. AI analysis will process the detected information.",
+
+
+            "findings":
+            text[:500],
+
+
+            "recommendation":
+            "Please consult a qualified healthcare professional for diagnosis."
+
+        }
+
+
+        return result
 
 
 
     except Exception as e:
 
 
-        print(
-            "PDF Error:",
-            e
-        )
+        return {
 
+            "status":"error",
+            "message":str(e)
 
-        return "Unable to read PDF"
-
-
-
-
-
-
-
-# backward compatibility
-# (if old code calls extract_text)
-
-def extract_text(file_path):
-
-
-    return extract_pdf_text(
-        file_path
-    )
-
-
-
-
-
-
-
-
-
-# =========================
-# AI REPORT ANALYSIS
-# =========================
-
-
-def analyze_report(report_text):
-
-
-
-    prompt = f"""
-
-You are Netravaan AI medical assistant.
-
-Analyze this medical report carefully.
-
-Medical Report:
-
-{report_text}
-
-
-
-Provide response in this format:
-
-
-1. Report Summary
-
-2. Important Findings
-
-3. Possible Health Concerns
-
-4. General Health Suggestions
-
-
-Rules:
-
-- Do not give final diagnosis.
-- Explain in simple language.
-- Mention doctor consultation when needed.
-- Do not create fear.
-
-
-"""
-
-
-
-
-    try:
-
-
-
-        response = ollama.chat(
-
-
-            model="llama3",
-
-
-            messages=[
-
-                {
-
-                "role":"user",
-
-                "content":prompt
-
-                }
-
-            ]
-
-        )
-
-
-
-        return response["message"]["content"]
-
-
-
-
-
-    except Exception as e:
-
-
-
-        return (
-
-            "AI Analysis Error: "
-
-            + str(e)
-
-        )
+        }
