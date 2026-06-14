@@ -1,3 +1,5 @@
+from unittest import result
+
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -39,7 +41,7 @@ except Exception:
 
 
 app = FastAPI(
-    title="Netravaan AI"
+    title="Medinova AI"
 )
 
 
@@ -196,7 +198,7 @@ def home():
     return {
 
         "message":
-        "Netravaan AI Backend Running"
+        "Medinova AI Backend Running"
 
     }
 
@@ -409,78 +411,25 @@ def predict(data:PredictionInput):
 # REPORT ANALYZER
 # =========================
 
-
 @app.post("/report")
-
-
 async def report(file:UploadFile=File(...)):
 
 
-
-    upload_dir=os.path.join(
-
-        BASE_DIR,
-
-        "uploads"
-
-    )
+    path="report.pdf"
 
 
+    with open(path,"wb") as f:
 
-    os.makedirs(
-
-        upload_dir,
-
-        exist_ok=True
-
-    )
-
-
-
-
-    file_path=os.path.join(
-
-        upload_dir,
-
-        file.filename
-
-    )
-
-
-
-
-    with open(file_path,"wb") as buffer:
-
-
-        shutil.copyfileobj(
-
-            file.file,
-
-            buffer
-
+        f.write(
+            await file.read()
         )
 
 
+    analysis=analyze_report(path)
 
 
 
-    result=analyze_report(
-
-        file_path
-
-    )
-
-
-
-
-    return result
-
-
-
-
-
-
-
+    return analysis
 # =========================
 # CHAT AI
 # =========================

@@ -3,13 +3,62 @@
 
 min-height:100vh;
 
-background:#effff8;
+padding:40px;
+
+background:#f5f9ff;
+
+font-family:
+Arial;
+
+
+}
+
+
+.report-page h1{
+
+
+color:#0b5ed7;
+
+}
+
+
+
+.upload-box{
+
+
+background:white;
+
+padding:25px;
+
+border-radius:20px;
+
+box-shadow:
+0 10px 30px #ddd;
 
 display:flex;
 
-justify-content:center;
+gap:20px;
 
-align-items:center;
+width:500px;
+
+}
+
+
+
+button{
+
+
+background:#0b5ed7;
+
+color:white;
+
+border:none;
+
+padding:12px 25px;
+
+border-radius:10px;
+
+cursor:pointer;
 
 
 }
@@ -20,67 +69,49 @@ align-items:center;
 .report-card{
 
 
-width:650px;
+margin-top:30px;
 
 background:white;
 
-padding:45px;
+padding:30px;
 
-border-radius:30px;
+border-radius:25px;
 
 box-shadow:
+0 10px 30px #ddd;
 
-0 15px 40px rgba(0,0,0,.12);
-
-text-align:center;
-
-
-}
-
-
-
-.report-card h1{
-
-
-color:#008f6b;
-
-font-size:32px;
+max-width:800px;
 
 
 }
 
 
 
-.report-card input{
+
+.summary{
 
 
-margin:25px;
+background:#e8f2ff;
 
-padding:15px;
+padding:20px;
 
 border-radius:15px;
 
-border:1px solid #ccc;
-
 
 }
 
 
 
-.report-card button{
+details{
 
 
-background:#00a878;
+margin-top:20px;
 
-color:white;
+background:#fafafa;
 
-border:none;
+padding:20px;
 
-padding:15px 40px;
-
-border-radius:30px;
-
-font-size:18px;
+border-radius:15px;
 
 cursor:pointer;
 
@@ -88,37 +119,38 @@ cursor:pointer;
 }
 
 
-.report-card button:hover{
+summary{
 
 
-background:#007d5b;
+font-size:20px;
+
+font-weight:bold;
 
 
 }
 
 
 
-.result{
+li{
+
+
+margin:10px;
+
+font-size:16px;
+
+}
+
+
+
+.warning{
 
 
 margin-top:30px;
 
-padding:25px;
+background:#fff3cd;
 
-background:#f5fffa;
+padding:15px;
 
-border-radius:20px;
-
-text-align:left;
-
-
-}
-
-
-.result h2{
-
-
-color:#008f6b;
-
+border-radius:10px;
 
 }

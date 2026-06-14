@@ -1,210 +1,142 @@
 import fitz
-
 from ai_service import ask_ai
+import json
 
-
-
-# =========================
-# EXTRACT TEXT FROM PDF
-# =========================
 
 def extract_text(pdf_path):
 
-    try:
+    text = ""
 
-        text = ""
+    doc = fitz.open(pdf_path)
 
-        doc = fitz.open(pdf_path)
+    for page in doc:
+        text += page.get_text()
 
+    doc.close()
 
-        for page in doc:
-
-            page_text = page.get_text()
-
-            text += page_text + "\n"
+    return text.strip()
 
 
-
-        doc.close()
-
-
-
-        return text.strip()
-
-
-
-    except Exception as e:
-
-
-        print("PDF ERROR:", e)
-
-        return ""
-
-
-
-
-
-# =========================
-# ANALYZE MEDICAL REPORT
-# =========================
 
 def analyze_report(pdf_path):
 
+    try:
 
-    report_text = extract_text(pdf_path)
-
-
-
-    if not report_text:
+        report_text = extract_text(pdf_path)
 
 
-        return {
+        if not report_text:
 
+            return {
+                "summary":
+                "Unable to read this report.",
 
-            "analysis": """
+                "findings": [],
 
-🩺 Health Report Summary
+                "concerns": [],
 
-
-⚠️ Unable to read this PDF.
-
-Please upload a clear medical report PDF.
-
-"""
-
-
-        }
+                "advice": []
+            }
 
 
 
+        prompt = f"""
 
+You are Netravaan AI medical assistant.
 
-    # Prevent huge reports crashing local LLM
+Analyze this medical report.
 
-    if len(report_text) > 6000:
+Return ONLY valid JSON.
 
-        report_text = report_text[:6000]
+Format:
 
+{{
+"summary":"short simple explanation",
 
+"findings":[
+"finding 1",
+"finding 2"
+],
 
+"concerns":[
+"concern 1"
+],
 
+"advice":[
+"health advice 1",
+"health advice 2"
+]
 
-    prompt = f"""
+}}
 
-You are Netravaan AI,
-a medical report assistant.
+Rules:
 
-
-Your job:
-
-Explain this medical report
-to a normal person.
-
-
-STRICT RULES:
-
-- Use simple English.
-- No complex medical language.
-- Do not diagnose diseases.
-- Do not scare the user.
-- Maximum 150 words.
-- Use bullet points.
-
-
-FORMAT EXACTLY:
-
-
-
-🩺 Health Report Summary
-
-
-📄 Report Type:
-
-(write report type)
-
-
-
-🔍 Key Findings:
-
-- finding 1
-
-- finding 2
-
-
-
-⚠️ Possible Concerns:
-
-- explain simply
-
-
-
-✅ General Advice:
-
-- simple health suggestions
-
-
-
-📌 Disclaimer:
-
-This AI explanation is only for information.
-Consult a doctor for medical decisions.
-
+- Keep summary under 3 sentences
+- Use simple patient friendly language
+- Do not diagnose
+- Avoid medical jargon
 
 
 REPORT:
 
 {report_text}
 
-
-
 """
 
 
 
-
-    try:
-
-
-        ai_response = ask_ai(prompt)
+        response = ask_ai(prompt)
 
 
 
-        return {
+        print("AI RESPONSE:")
+        print(response)
 
 
-            "analysis": ai_response
+
+        try:
+
+            data=json.loads(response)
 
 
-        }
+        except:
 
+
+            data={
+
+                "summary":response,
+
+                "findings":[],
+
+                "concerns":[],
+
+                "advice":[]
+
+            }
+
+
+
+        return data
 
 
 
     except Exception as e:
 
 
-        print(
-            "REPORT AI ERROR:",
-            e
-        )
-
+        print("REPORT ERROR:",e)
 
 
         return {
 
 
-            "analysis":
-
-            """
-
-🩺 Health Report Summary
+        "summary":
+        "Unable to analyze report right now.",
 
 
-⚠️ AI analysis is currently unavailable.
+        "findings":[],
 
-Please try again later.
+        "concerns":[],
 
-
-"""
+        "advice":[]
 
         }

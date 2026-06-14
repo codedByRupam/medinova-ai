@@ -3,7 +3,8 @@ import api from "../api";
 import "./ReportAnalyzer.css";
 
 
-export default function Report(){
+
+export default function ReportAnalyzer(){
 
 
 const [file,setFile]=useState(null);
@@ -20,16 +21,16 @@ const uploadReport=async()=>{
 if(!file)return;
 
 
-setLoading(true);
-
-
-
 let form=new FormData();
 
 form.append(
 "file",
 file
 );
+
+
+
+setLoading(true);
 
 
 
@@ -46,21 +47,20 @@ form
 
 
 
-setData(res.data);
+setData(res.data.analysis);
 
 
 
 }
 
-catch(err){
-
+catch(e){
 
 alert(
 "Report upload failed"
 );
 
-
 }
+
 
 
 setLoading(false);
@@ -74,6 +74,7 @@ setLoading(false);
 
 return(
 
+
 <div className="report-page">
 
 
@@ -82,7 +83,13 @@ return(
 </h1>
 
 
-<div className="upload-card">
+<p>
+Upload your medical report and get an easy explanation
+</p>
+
+
+
+<div className="upload-box">
 
 
 <input
@@ -98,16 +105,9 @@ e=>setFile(e.target.files[0])
 />
 
 
-
 <button onClick={uploadReport}>
 
-{
-loading?
-"Analyzing..."
-:
-"Analyze Report"
-}
-
+Analyze Report
 
 </button>
 
@@ -119,46 +119,82 @@ loading?
 
 
 {
+loading &&
+
+<h3>
+Analyzing report...
+</h3>
+
+}
+
+
+
+
+
+
+{
 data &&
 
 
-<div className="result-card">
+<div className="report-card">
 
+
+
+<section className="summary">
 
 <h2>
 📝 Summary
 </h2>
 
-
 <p>
+
 {data.summary}
+
 </p>
 
+</section>
 
 
-<details open>
+
+
+
+<details>
 
 
 <summary>
+
 🔍 Key Findings
+
 </summary>
+
 
 
 <ul>
 
 {
+
 data.findings.map(
-(x,i)=>
+
+(item,i)=>
+
 <li key={i}>
-{x}
+
+{item}
+
 </li>
+
+
 )
+
 }
 
 </ul>
 
 
+
 </details>
+
+
 
 
 
@@ -168,25 +204,38 @@ data.findings.map(
 
 
 <summary>
+
 ⚠️ Possible Concerns
+
 </summary>
+
 
 
 <ul>
 
 {
+
 data.concerns.map(
-(x,i)=>
+
+(item,i)=>
+
 <li key={i}>
-{x}
+
+{item}
+
 </li>
+
+
 )
+
 }
 
 </ul>
 
 
+
 </details>
+
 
 
 
@@ -196,22 +245,34 @@ data.concerns.map(
 
 
 <summary>
+
 ✅ Health Advice
+
 </summary>
+
 
 
 <ul>
 
 {
+
 data.advice.map(
-(x,i)=>
+
+(item,i)=>
+
 <li key={i}>
-{x}
+
+{item}
+
 </li>
+
+
 )
+
 }
 
 </ul>
+
 
 
 </details>
@@ -219,11 +280,13 @@ data.advice.map(
 
 
 
-<p className="warning">
+<div className="warning">
 
-⚕️ AI information only. Consult a healthcare professional.
 
-</p>
+⚕️ AI generated information only.
+Always consult a healthcare professional.
+
+</div>
 
 
 
@@ -231,6 +294,8 @@ data.advice.map(
 
 
 }
+
+
 
 
 

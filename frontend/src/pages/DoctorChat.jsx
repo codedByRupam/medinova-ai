@@ -1,22 +1,37 @@
-import {useState} from "react";
+import { useState } from "react";
 import api from "../api";
+import ReactMarkdown from "react-markdown";
 import "./DoctorChat.css";
 
 
-export default function DoctorChat(){
+export default function DoctorChat() {
 
 
-const [message,setMessage]=useState("");
+const [message,setMessage] = useState("");
 
-const [loading,setLoading]=useState(false);
+const [loading,setLoading] = useState(false);
 
 
 
-const [chats,setChats]=useState([
+const [chats,setChats] = useState([
 
 {
 sender:"ai",
-text:"Hello 👋 I am Netravaan AI Doctor. How can I help you today?"
+text:
+`
+## 👋 Welcome to Medinova AI Doctor
+
+I am your healthcare assistant.
+
+You can ask me about:
+
+• Symptoms  
+• Health questions  
+• Medical reports  
+• General health advice  
+
+How can I help you today?
+`
 }
 
 ]);
@@ -24,10 +39,11 @@ text:"Hello 👋 I am Netravaan AI Doctor. How can I help you today?"
 
 
 
+
 const sendMessage = async()=>{
 
 
-if(!message) return;
+if(!message.trim()) return;
 
 
 
@@ -74,9 +90,6 @@ message:userMessage.text
 
 
 
-setTimeout(()=>{
-
-
 setChats(prev=>[
 
 ...prev,
@@ -85,49 +98,50 @@ setChats(prev=>[
 
 sender:"ai",
 
-text:response.data.response
-
-}
-
-]
-
-
-);
-
-
-setLoading(false);
-
-
-
-},1000);
-
-
-
-}
-
-
-catch(error){
-
-
-setChats(prev=>[
-
-...prev,
-
-{
-
-sender:"ai",
-
-text:"Sorry, unable to connect with AI doctor"
+text:
+response.data.response || 
+response.data.message
 
 }
 
 ]);
 
 
-setLoading(false);
+
+}
+
+catch(error){
+
+
+console.log(error);
+
+
+
+setChats(prev=>[
+
+...prev,
+
+{
+
+sender:"ai",
+
+text:
+`
+⚠️ Sorry, I cannot connect to Medinova AI right now.
+
+Please try again.
+`
+
+}
+
+]);
 
 
 }
+
+
+
+setLoading(false);
 
 
 
@@ -140,15 +154,21 @@ setLoading(false);
 return(
 
 
-<div className="doctor-container">
+<div className="doctor-page">
 
+
+<div className="doctor-card">
+
+
+
+{/* HEADER */}
 
 <div className="doctor-header">
 
 
-<div className="avatar">
+<div className="doctor-avatar">
 
-🩺
+🤖
 
 </div>
 
@@ -156,11 +176,11 @@ return(
 <div>
 
 <h2>
-Netravaan AI Doctor
+Medinova AI Doctor
 </h2>
 
 <p>
-Healthcare Assistant
+Your personal healthcare assistant
 </p>
 
 </div>
@@ -170,6 +190,9 @@ Healthcare Assistant
 
 
 
+
+
+{/* CHAT AREA */}
 
 
 <div className="chat-box">
@@ -190,11 +213,11 @@ chat.sender==="user"
 
 ?
 
-"user-msg"
+"user-message"
 
 :
 
-"ai-msg"
+"ai-message"
 
 }
 
@@ -202,21 +225,45 @@ chat.sender==="user"
 >
 
 
+<div className="message-icon">
+
+
 {
 
-chat.sender==="ai" &&
+chat.sender==="user"
 
-<span>
-🤖
-</span>
+?
+
+"👤"
+
+:
+
+"🤖"
 
 }
 
 
+</div>
+
+
+
+
+<div className="message-text">
+
+
+<ReactMarkdown>
+
 {chat.text}
+
+</ReactMarkdown>
 
 
 </div>
+
+
+
+</div>
+
 
 
 ))
@@ -226,13 +273,14 @@ chat.sender==="ai" &&
 
 
 
+
 {
 
 loading &&
 
 <div className="typing">
 
-AI Doctor typing...
+🤖 Medinova AI is thinking...
 
 </div>
 
@@ -241,14 +289,16 @@ AI Doctor typing...
 
 
 
-
 </div>
 
 
 
 
 
-<div className="input-area">
+{/* INPUT */}
+
+
+<div className="input-section">
 
 
 <input
@@ -258,12 +308,13 @@ value={message}
 
 
 onChange={(e)=>
+
 setMessage(e.target.value)
+
 }
 
 
 placeholder="Ask your health question..."
-
 
 
 onKeyDown={(e)=>{
@@ -275,14 +326,13 @@ sendMessage()
 }}
 
 
-
 />
 
 
 
 <button onClick={sendMessage}>
 
-Send
+Send ➤
 
 </button>
 
@@ -293,12 +343,14 @@ Send
 
 
 
+</div>
+
 
 </div>
 
 
-
 )
+
 
 
 }
