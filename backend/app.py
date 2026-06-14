@@ -5,17 +5,11 @@ from pydantic import BaseModel
 
 import pandas as pd
 import joblib
+import os
+import shutil
 
 
-from report_analyzer import (
-    extract_text,
-    analyze_report
-)
-
-from voice_assistant import (
-    speech_to_text,
-    text_to_speech
-)
+from report_analyzer import analyze_report
 
 
 from chatbot import medical_chat
@@ -25,11 +19,36 @@ from translator import translate_text
 
 
 
+# voice import safely
+try:
+
+    from voice_assistant import (
+        speech_to_text,
+        text_to_speech
+    )
+
+    VOICE_AVAILABLE = True
+
+
+except Exception:
+
+    VOICE_AVAILABLE = False
+
+
+
+
 
 app = FastAPI(
     title="Netravaan AI"
 )
 
+
+
+
+
+# =========================
+# CORS
+# =========================
 
 
 app.add_middleware(
@@ -46,33 +65,64 @@ app.add_middleware(
 
 
 
-# ------------------------
+
+
+# =========================
 # TEMP USERS
-# ------------------------
+# =========================
+
 
 users={}
 
 
 
-# ------------------------
-# LOAD MODEL
-# ------------------------
+
+
+# =========================
+# MODEL LOAD
+# =========================
+
+
+BASE_DIR = os.path.dirname(
+    os.path.abspath(__file__)
+)
+
+
+
+MODEL_PATH=os.path.join(
+    BASE_DIR,
+    "models",
+    "disease_model.pkl"
+)
+
+
+
+ENCODER_PATH=os.path.join(
+    BASE_DIR,
+    "models",
+    "feature_encoders.pkl"
+)
+
 
 
 model=joblib.load(
-    "../models/disease_model.pkl"
-)
-
-
-encoder=joblib.load(
-    "../models/disease_encoder.pkl"
+    MODEL_PATH
 )
 
 
 
-# ------------------------
+encoders=joblib.load(
+    ENCODER_PATH
+)
+
+
+
+
+
+
+# =========================
 # SCHEMAS
-# ------------------------
+# =========================
 
 
 class Register(BaseModel):
@@ -85,11 +135,15 @@ class Register(BaseModel):
 
 
 
+
+
 class Login(BaseModel):
 
     email:str
 
     password:str
+
+
 
 
 
@@ -117,6 +171,8 @@ class PredictionInput(BaseModel):
 
 
 
+
+
 class ChatRequest(BaseModel):
 
     message:str
@@ -125,28 +181,34 @@ class ChatRequest(BaseModel):
 
 
 
-# ------------------------
+
+
+# =========================
 # HOME
-# ------------------------
+# =========================
 
 
 @app.get("/")
+
 
 def home():
 
     return {
 
         "message":
-        "Netravaan AI Running"
+        "Netravaan AI Backend Running"
 
     }
 
 
 
 
-# ------------------------
+
+
+
+# =========================
 # REGISTER
-# ------------------------
+# =========================
 
 
 @app.post("/register")
@@ -156,14 +218,12 @@ def register(data:Register):
 
     users[data.email]={
 
-
         "name":data.name,
-
 
         "password":data.password
 
-
     }
+
 
 
     return {
@@ -178,9 +238,10 @@ def register(data:Register):
 
 
 
-# ------------------------
+
+# =========================
 # LOGIN
-# ------------------------
+# =========================
 
 
 @app.post("/login")
@@ -193,7 +254,9 @@ def login(data:Login):
     )
 
 
+
     if not user:
+
 
         return {
 
@@ -201,6 +264,8 @@ def login(data:Login):
             "User not found"
 
         }
+
+
 
 
 
@@ -216,14 +281,16 @@ def login(data:Login):
 
 
 
-
     return {
+
 
         "message":
         "Login successful",
 
+
         "name":
         user["name"]
+
 
     }
 
@@ -231,48 +298,54 @@ def login(data:Login):
 
 
 
-# ------------------------
+
+
+
+# =========================
 # DISEASE PREDICTION
-# ------------------------
+# =========================
 
 
 @app.post("/predict")
 
+
 def predict(data:PredictionInput):
+
 
 
     df=pd.DataFrame([{
 
 
-    "Fever":data.Fever,
+        "Fever":data.Fever,
 
-    "Cough":data.Cough,
+        "Cough":data.Cough,
 
-    "Fatigue":data.Fatigue,
+        "Fatigue":data.Fatigue,
 
-    "Difficulty Breathing":
-    data.Difficulty_Breathing,
-
-
-    "Age":data.Age,
+        "Difficulty Breathing":
+        data.Difficulty_Breathing,
 
 
-    "Gender":data.Gender,
+        "Age":data.Age,
 
 
-    "Blood Pressure":
-    data.Blood_Pressure,
+        "Gender":data.Gender,
 
 
-    "Cholesterol Level":
-    data.Cholesterol_Level,
+        "Blood Pressure":
+        data.Blood_Pressure,
 
 
-    "Outcome Variable":
-    data.Outcome_Variable
+        "Cholesterol Level":
+        data.Cholesterol_Level,
+
+
+        "Outcome Variable":
+        data.Outcome_Variable
 
 
     }])
+
 
 
 
@@ -280,16 +353,46 @@ def predict(data:PredictionInput):
 
 
 
-    disease=encoder.inverse_transform(
-        result
-    )
+
+
+    # find encoder
+
+    encoder=None
+
+
+    if isinstance(encoders,dict):
+
+        for key,value in encoders.items():
+
+            if hasattr(value,"inverse_transform"):
+
+                encoder=value
+
+                break
+
+
+
+    if encoder:
+
+
+        disease=encoder.inverse_transform(
+            result
+        )[0]
+
+
+    else:
+
+        disease=str(result[0])
+
+
 
 
 
     return {
 
+
         "prediction":
-        disease[0]
+        disease
 
     }
 
@@ -297,41 +400,111 @@ def predict(data:PredictionInput):
 
 
 
-# ------------------------
-# REPORT ANALYZER
-# ------------------------
 
+
+
+
+
+# =========================
+# REPORT ANALYZER
+# =========================
 
 
 @app.post("/report")
 
+
 async def report(file:UploadFile=File(...)):
 
 
-    path="report.pdf"
 
+    upload_dir=os.path.join(
 
-    with open(path,"wb") as f:
+        BASE_DIR,
 
-        f.write(
-            await file.read()
-        )
+        "uploads"
 
-
-    text=extract_text(
-        path
     )
 
 
-    analysis=analyze_report(
-        text
+
+    os.makedirs(
+
+        upload_dir,
+
+        exist_ok=True
+
+    )
+
+
+
+
+    file_path=os.path.join(
+
+        upload_dir,
+
+        file.filename
+
+    )
+
+
+
+
+    with open(file_path,"wb") as buffer:
+
+
+        shutil.copyfileobj(
+
+            file.file,
+
+            buffer
+
+        )
+
+
+
+
+
+    result=analyze_report(
+
+        file_path
+
+    )
+
+
+
+
+    return result
+
+
+
+
+
+
+
+# =========================
+# CHAT AI
+# =========================
+
+
+@app.post("/chat")
+
+
+def chat(data:ChatRequest):
+
+
+
+    answer=medical_chat(
+
+        data.message
+
     )
 
 
     return {
 
-        "analysis":
-        analysis
+
+        "answer":
+        answer
 
     }
 
@@ -340,15 +513,31 @@ async def report(file:UploadFile=File(...)):
 
 
 
-# ------------------------
-# VOICE AI
-# ------------------------
 
+
+# =========================
+# VOICE AI
+# =========================
 
 
 @app.get("/voice")
 
+
 def voice():
+
+
+    if not VOICE_AVAILABLE:
+
+
+        return {
+
+
+            "error":
+            "Voice service unavailable on server"
+
+        }
+
+
 
 
     question,lang=speech_to_text()
@@ -356,23 +545,34 @@ def voice():
 
 
     answer=medical_chat(
+
         question
+
     )
 
 
 
     if lang!="en":
 
+
         answer=translate_text(
+
             answer,
+
             lang
+
         )
 
 
 
+
+
     text_to_speech(
+
         answer
+
     )
+
 
 
 
@@ -385,6 +585,5 @@ def voice():
 
         "answer":
         answer
-
 
     }

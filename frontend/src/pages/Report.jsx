@@ -43,7 +43,7 @@ res.data.analysis
 
 return(
 
-<div className="report">
+<div className="report-result">
 
 
 <h1>
