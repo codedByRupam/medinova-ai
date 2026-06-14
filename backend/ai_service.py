@@ -1,42 +1,55 @@
-from google import genai
-from dotenv import load_dotenv
-import os
+import ollama
 
 
-load_dotenv()
 
-
-client = genai.Client(
-
-    api_key=os.getenv(
-        "GEMINI_API_KEY"
-    )
-
-)
-
+MODEL_NAME = "llama3.2:3b"
 
 
 
 def ask_ai(prompt):
 
-
     try:
 
 
-        response = client.models.generate_content(
+        response = ollama.chat(
 
-            model="gemini-2.0-flash",
+            model=MODEL_NAME,
 
-            contents=prompt
+            messages=[
+
+                {
+
+                    "role":"user",
+
+                    "content":prompt
+
+                }
+
+            ],
+
+            options={
+
+
+                "temperature":0.2,
+
+
+                "num_ctx":1024
+
+
+            }
+
 
         )
 
 
-        return response.text
+        return response["message"]["content"]
 
 
 
     except Exception as e:
 
 
-        return "AI service temporarily unavailable."
+        print("OLLAMA ERROR:",e)
+
+
+        return "AI service unavailable"

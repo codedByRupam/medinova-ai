@@ -7,6 +7,7 @@ import Doctor from "./pages/Doctor";
 import Prediction from "./pages/Prediction";
 import Report from "./pages/Report";
 import Voice from "./pages/Voice";
+import Register from "./pages/Register";
 
 
 function App(){
@@ -19,11 +20,15 @@ return(
 
 <Navbar/>
 
-
 <Routes>
 
-
 <Route path="/" element={<Home/>}/>
+
+<Route 
+path="/register"
+element={<Register/>}
+/>
+
 
 
 <Route 

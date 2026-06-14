@@ -1,11 +1,6 @@
 import ollama
 
 
-# =========================
-# Netravaan AI Medical Chatbot
-# Lightweight Model Version
-# =========================
-
 
 MODEL_NAME = "llama3.2:3b"
 
@@ -13,37 +8,28 @@ MODEL_NAME = "llama3.2:3b"
 
 def medical_chat(user_message):
 
+
     try:
 
 
         prompt = f"""
 
-You are Netravaan AI, a medical assistant.
+You are Netravaan AI,
+a medical assistant.
 
-Help users with general health information.
+Answer in simple language.
 
-Your responsibilities:
+Rules:
 
-- Explain symptoms in simple language
-- Provide general health guidance
-- Explain medical reports
-- Suggest when a doctor should be consulted
-
-
-Important rules:
-
-- Do not provide final diagnosis
-- Do not replace a doctor
-- Avoid unsafe medical advice
-- Ask questions if information is missing
+- Explain clearly
+- Do not diagnose
+- Give general health guidance
+- Suggest doctor visit when needed
 
 
 User:
 
 {user_message}
-
-
-Response:
 
 """
 
@@ -55,17 +41,17 @@ Response:
             messages=[
 
                 {
-                    "role": "user",
-                    "content": prompt
+                    "role":"user",
+                    "content":prompt
                 }
 
             ],
 
             options={
 
-                "temperature": 0.3,
+                "temperature":0.3,
 
-                "num_ctx": 2048
+                "num_ctx":1024
 
             }
 
@@ -79,15 +65,7 @@ Response:
     except Exception as e:
 
 
-        print(
-            "Chatbot Error:",
-            e
-        )
+        print("OLLAMA ERROR:",e)
 
 
-        return (
-
-            "Netravaan AI is unavailable. "
-            "Please check if Ollama is running."
-
-        )
+        return "AI service unavailable"

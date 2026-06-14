@@ -25,7 +25,7 @@ file
 
 
 let res=await api.post(
-"/upload-report",
+"/report",
 form
 );
 

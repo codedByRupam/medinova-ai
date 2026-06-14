@@ -43,7 +43,7 @@ Talk To AI Doctor
 
 
 
-<Link to="/prediction">
+<Link to="/register">
 
 <button className="outline">
 Get Started

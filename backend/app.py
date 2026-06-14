@@ -503,8 +503,7 @@ def chat(data:ChatRequest):
     return {
 
 
-        "answer":
-        answer
+         "response":answer
 
     }
 

@@ -10,21 +10,35 @@ from ai_service import ask_ai
 
 def extract_text(pdf_path):
 
-    text = ""
+    try:
+
+        text = ""
+
+        doc = fitz.open(pdf_path)
 
 
-    doc = fitz.open(pdf_path)
+        for page in doc:
+
+            page_text = page.get_text()
+
+            text += page_text + "\n"
 
 
-    for page in doc:
 
-        text += page.get_text()
-
-
-    doc.close()
+        doc.close()
 
 
-    return text.strip()
+
+        return text.strip()
+
+
+
+    except Exception as e:
+
+
+        print("PDF ERROR:", e)
+
+        return ""
 
 
 
@@ -46,6 +60,7 @@ def analyze_report(pdf_path):
 
         return {
 
+
             "analysis": """
 
 🩺 Health Report Summary
@@ -57,7 +72,18 @@ Please upload a clear medical report PDF.
 
 """
 
+
         }
+
+
+
+
+
+    # Prevent huge reports crashing local LLM
+
+    if len(report_text) > 6000:
+
+        report_text = report_text[:6000]
 
 
 
@@ -65,65 +91,120 @@ Please upload a clear medical report PDF.
 
     prompt = f"""
 
-You are Netravaan AI, a healthcare assistant.
+You are Netravaan AI,
+a medical report assistant.
 
-Read the medical report below and explain it like a doctor explaining to a patient.
 
-IMPORTANT RULES:
+Your job:
 
-- Use simple words.
-- Do not write a long medical article.
-- Avoid complicated medical terms.
-- Maximum 200 words.
+Explain this medical report
+to a normal person.
+
+
+STRICT RULES:
+
+- Use simple English.
+- No complex medical language.
+- Do not diagnose diseases.
+- Do not scare the user.
+- Maximum 150 words.
 - Use bullet points.
-- Make it easy for normal people.
 
-Follow this exact format:
+
+FORMAT EXACTLY:
+
 
 
 🩺 Health Report Summary
 
 
 📄 Report Type:
-(identify report type)
+
+(write report type)
+
 
 
 🔍 Key Findings:
-- Important result 1
-- Important result 2
+
+- finding 1
+
+- finding 2
+
 
 
 ⚠️ Possible Concerns:
-- Explain possible issues simply
 
-
-✅ General Health Advice:
-- Give basic suggestions
-
-
-📌 Note:
-This AI analysis is only for information and is not a medical diagnosis.
+- explain simply
 
 
 
-Medical Report:
+✅ General Advice:
+
+- simple health suggestions
+
+
+
+📌 Disclaimer:
+
+This AI explanation is only for information.
+Consult a doctor for medical decisions.
+
+
+
+REPORT:
 
 {report_text}
+
+
 
 """
 
 
 
 
-    ai_response = ask_ai(prompt)
+    try:
+
+
+        ai_response = ask_ai(prompt)
+
+
+
+        return {
+
+
+            "analysis": ai_response
+
+
+        }
 
 
 
 
-    return {
+    except Exception as e:
 
 
-        "analysis": ai_response
+        print(
+            "REPORT AI ERROR:",
+            e
+        )
 
 
-    }
+
+        return {
+
+
+            "analysis":
+
+            """
+
+🩺 Health Report Summary
+
+
+⚠️ AI analysis is currently unavailable.
+
+Please try again later.
+
+
+"""
+
+        }
