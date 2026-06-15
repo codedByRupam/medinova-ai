@@ -24,7 +24,7 @@ Artificial Intelligence
 
 
 <p>
-Netravaan AI is your smart healthcare assistant.
+Medinova AI is your smart healthcare assistant.
 Predict diseases, analyze reports and consult AI doctor.
 </p>
 
