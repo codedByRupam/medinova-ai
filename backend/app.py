@@ -1,5 +1,3 @@
-from unittest import result
-
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,15 +6,10 @@ from pydantic import BaseModel
 import pandas as pd
 import joblib
 import os
-import shutil
 
 
 from report_analyzer import analyze_report
-
-
 from chatbot import medical_chat
-
-
 from translator import translate_text
 
 
@@ -74,7 +67,7 @@ app.add_middleware(
 # =========================
 
 
-users={}
+users = {}
 
 
 
@@ -90,16 +83,14 @@ BASE_DIR = os.path.dirname(
 )
 
 
-
-MODEL_PATH=os.path.join(
+MODEL_PATH = os.path.join(
     BASE_DIR,
     "models",
     "disease_model.pkl"
 )
 
 
-
-ENCODER_PATH=os.path.join(
+ENCODER_PATH = os.path.join(
     BASE_DIR,
     "models",
     "feature_encoders.pkl"
@@ -107,16 +98,20 @@ ENCODER_PATH=os.path.join(
 
 
 
-model=joblib.load(
+model = joblib.load(
     MODEL_PATH
 )
 
 
 
-encoders=joblib.load(
+encoders = joblib.load(
     ENCODER_PATH
 )
 
+
+
+print("Model loaded")
+print("Encoder loaded")
 
 
 
@@ -138,14 +133,11 @@ class Register(BaseModel):
 
 
 
-
 class Login(BaseModel):
 
     email:str
 
     password:str
-
-
 
 
 
@@ -174,7 +166,6 @@ class PredictionInput(BaseModel):
 
 
 
-
 class ChatRequest(BaseModel):
 
     message:str
@@ -191,8 +182,6 @@ class ChatRequest(BaseModel):
 
 
 @app.get("/")
-
-
 def home():
 
     return {
@@ -227,7 +216,6 @@ def register(data:Register):
     }
 
 
-
     return {
 
         "message":
@@ -251,14 +239,12 @@ def register(data:Register):
 def login(data:Login):
 
 
-    user=users.get(
+    user = users.get(
         data.email
     )
 
 
-
     if not user:
-
 
         return {
 
@@ -266,8 +252,6 @@ def login(data:Login):
             "User not found"
 
         }
-
-
 
 
 
@@ -293,8 +277,8 @@ def login(data:Login):
         "name":
         user["name"]
 
-
     }
+
 
 
 
@@ -310,94 +294,141 @@ def login(data:Login):
 
 @app.post("/predict")
 
-
 def predict(data:PredictionInput):
 
 
-
-    df=pd.DataFrame([{
-
-
-        "Fever":data.Fever,
-
-        "Cough":data.Cough,
-
-        "Fatigue":data.Fatigue,
-
-        "Difficulty Breathing":
-        data.Difficulty_Breathing,
+    try:
 
 
-        "Age":data.Age,
+        df = pd.DataFrame([{
 
+            "Fever":data.Fever,
 
-        "Gender":data.Gender,
+            "Cough":data.Cough,
 
+            "Fatigue":data.Fatigue,
 
-        "Blood Pressure":
-        data.Blood_Pressure,
+            "Difficulty Breathing":
+            data.Difficulty_Breathing,
 
+            "Age":data.Age,
 
-        "Cholesterol Level":
-        data.Cholesterol_Level,
+            "Gender":data.Gender,
 
+            "Blood Pressure":
+            data.Blood_Pressure,
 
-        "Outcome Variable":
-        data.Outcome_Variable
+            "Cholesterol Level":
+            data.Cholesterol_Level,
 
+            "Outcome Variable":
+            data.Outcome_Variable
 
-    }])
+        }])
 
 
 
-
-    result=model.predict(df)
-
+        result = model.predict(df)
 
 
 
-
-    # find encoder
-
-    encoder=None
-
-
-    if isinstance(encoders,dict):
-
-        for key,value in encoders.items():
-
-            if hasattr(value,"inverse_transform"):
-
-                encoder=value
-
-                break
-
-
-
-    if encoder:
-
-
-        disease=encoder.inverse_transform(
+        print(
+            "MODEL OUTPUT:",
             result
-        )[0]
-
-
-    else:
-
-        disease=str(result[0])
+        )
 
 
 
+        encoder = None
 
 
-    return {
+
+        if isinstance(encoders, dict):
 
 
-        "prediction":
-        disease
+            for key,value in encoders.items():
 
-    }
 
+                if hasattr(value,"inverse_transform"):
+
+
+                    encoder=value
+
+                    print(
+                        "Using encoder:",
+                        key
+                    )
+
+                    break
+
+
+
+
+        if encoder:
+
+
+            try:
+
+
+                disease = encoder.inverse_transform(
+                    result
+                )[0]
+
+
+
+            except Exception as e:
+
+
+                print(
+                    "Encoder error:",
+                    e
+                )
+
+
+                disease = "Unknown disease"
+
+
+
+
+        else:
+
+
+            disease = str(
+                result[0]
+            )
+
+
+
+
+
+        return {
+
+
+            "prediction":
+            disease
+
+        }
+
+
+
+
+
+    except Exception as e:
+
+
+        print(
+            "Prediction error:",
+            e
+        )
+
+
+        return {
+
+
+            "error":
+            "Prediction service unavailable"
+
+        }
 
 
 
@@ -411,25 +442,41 @@ def predict(data:PredictionInput):
 # REPORT ANALYZER
 # =========================
 
+
 @app.post("/report")
+
 async def report(file:UploadFile=File(...)):
+
 
 
     path="report.pdf"
 
 
+
     with open(path,"wb") as f:
+
 
         f.write(
             await file.read()
         )
 
 
-    analysis=analyze_report(path)
+
+    analysis = analyze_report(path)
 
 
 
     return analysis
+
+
+
+
+
+
+
+
+
+
 # =========================
 # CHAT AI
 # =========================
@@ -437,24 +484,41 @@ async def report(file:UploadFile=File(...)):
 
 @app.post("/chat")
 
-
 def chat(data:ChatRequest):
 
 
-
-    answer=medical_chat(
-
-        data.message
-
-    )
+    try:
 
 
-    return {
+        answer = medical_chat(
+            data.message
+        )
 
 
-         "response":answer
+        return {
 
-    }
+
+            "response":
+            answer
+
+        }
+
+
+
+    except Exception as e:
+
+
+        print(e)
+
+
+        return {
+
+
+            "response":
+            "AI service unavailable"
+
+        }
+
 
 
 
@@ -470,8 +534,8 @@ def chat(data:ChatRequest):
 
 @app.get("/voice")
 
-
 def voice():
+
 
 
     if not VOICE_AVAILABLE:
@@ -481,29 +545,28 @@ def voice():
 
 
             "error":
-            "Voice service unavailable on server"
+            "Voice service unavailable"
 
         }
 
 
 
 
-    question,lang=speech_to_text()
+    question,lang = speech_to_text()
 
 
 
-    answer=medical_chat(
-
+    answer = medical_chat(
         question
-
     )
+
 
 
 
     if lang!="en":
 
 
-        answer=translate_text(
+        answer = translate_text(
 
             answer,
 
@@ -514,13 +577,9 @@ def voice():
 
 
 
-
     text_to_speech(
-
         answer
-
     )
-
 
 
 

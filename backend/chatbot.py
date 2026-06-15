@@ -14,7 +14,7 @@ def medical_chat(user_message):
 
         prompt = f"""
 
-You are Netravaan AI,
+You are Medinova AI,
 a medical assistant.
 
 Answer in simple language.

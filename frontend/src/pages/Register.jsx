@@ -18,30 +18,21 @@ const [data,setData] = useState({});
 function register(){
 
 
-api.post(
+api.post("/register", data)
+.then((res)=>{
 
-"/register",
-
-data
-
-)
-
-.then(()=>{
-
+console.log(res.data);
 
 alert("Registered");
 
 nav("/login");
 
-
 })
-
-
 .catch((err)=>{
 
 console.log(err);
 
-alert("Registration failed");
+alert("Register failed");
 
 });
 
