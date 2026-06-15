@@ -14,7 +14,10 @@ from translator import translate_text
 
 
 
-# voice import safely
+# =========================
+# VOICE
+# =========================
+
 try:
 
     from voice_assistant import (
@@ -28,6 +31,7 @@ try:
 except Exception:
 
     VOICE_AVAILABLE = False
+
 
 
 
@@ -62,12 +66,17 @@ app.add_middleware(
 
 
 
+
+
 # =========================
 # TEMP USERS
 # =========================
 
 
 users = {}
+
+
+
 
 
 
@@ -83,35 +92,77 @@ BASE_DIR = os.path.dirname(
 )
 
 
+
 MODEL_PATH = os.path.join(
+
     BASE_DIR,
+
     "models",
+
     "disease_model.pkl"
+
 )
 
 
-ENCODER_PATH = os.path.join(
+
+DISEASE_ENCODER_PATH = os.path.join(
+
     BASE_DIR,
+
     "models",
-    "feature_encoders.pkl"
+
+    "disease_encoder.pkl"
+
 )
+
+
 
 
 
 model = joblib.load(
+
     MODEL_PATH
+
 )
 
 
 
-encoders = joblib.load(
-    ENCODER_PATH
+disease_encoder = joblib.load(
+
+    DISEASE_ENCODER_PATH
+
+)
+
+FEATURE_ENCODER_PATH = os.path.join(
+
+    BASE_DIR,
+
+    "models",
+
+    "feature_encoders.pkl"
+
 )
 
 
+feature_encoders = joblib.load(
 
-print("Model loaded")
-print("Encoder loaded")
+    FEATURE_ENCODER_PATH
+
+)
+
+
+print("Feature encoders loaded")
+
+
+
+print("Disease model loaded")
+
+print("Disease encoder loaded")
+
+
+
+
+
 
 
 
@@ -133,6 +184,8 @@ class Register(BaseModel):
 
 
 
+
+
 class Login(BaseModel):
 
     email:str
@@ -142,25 +195,36 @@ class Login(BaseModel):
 
 
 
+
+
 class PredictionInput(BaseModel):
 
-    Fever:int
 
-    Cough:int
+    Fever:str
 
-    Fatigue:int
 
-    Difficulty_Breathing:int
+    Cough:str
+
+
+    Fatigue:str
+
+
+    Difficulty_Breathing:str
+
 
     Age:int
 
-    Gender:int
 
-    Blood_Pressure:int
+    Gender:str
 
-    Cholesterol_Level:int
 
-    Outcome_Variable:int
+    Blood_Pressure:str
+
+
+    Cholesterol_Level:str
+
+
+
 
 
 
@@ -177,19 +241,48 @@ class ChatRequest(BaseModel):
 
 
 # =========================
+# HELPER
+# =========================
+
+
+def yes_no(value):
+
+
+    if value.lower() == "yes":
+
+        return 1
+
+
+    return 0
+
+
+
+
+
+
+
+# =========================
 # HOME
 # =========================
 
 
 @app.get("/")
+
+
 def home():
 
+
     return {
+
 
         "message":
         "Medinova AI Backend Running"
 
+
     }
+
+
+
 
 
 
@@ -204,24 +297,36 @@ def home():
 
 @app.post("/register")
 
+
 def register(data:Register):
 
 
-    users[data.email]={
+    users[data.email] = {
 
-        "name":data.name,
 
-        "password":data.password
+        "name":
+        data.name,
+
+
+        "password":
+        data.password
+
 
     }
+
 
 
     return {
 
+
         "message":
         "Registration successful"
 
+
     }
+
+
+
 
 
 
@@ -236,22 +341,30 @@ def register(data:Register):
 
 @app.post("/login")
 
+
 def login(data:Login):
 
 
     user = users.get(
+
         data.email
+
     )
+
 
 
     if not user:
 
+
         return {
+
 
             "error":
             "User not found"
 
+
         }
+
 
 
 
@@ -260,10 +373,13 @@ def login(data:Login):
 
         return {
 
+
             "error":
             "Wrong password"
 
+
         }
+
 
 
 
@@ -276,6 +392,7 @@ def login(data:Login):
 
         "name":
         user["name"]
+
 
     }
 
@@ -291,8 +408,8 @@ def login(data:Login):
 # DISEASE PREDICTION
 # =========================
 
-
 @app.post("/predict")
+
 
 def predict(data:PredictionInput):
 
@@ -300,31 +417,93 @@ def predict(data:PredictionInput):
     try:
 
 
-        df = pd.DataFrame([{
+        input_data = {
 
-            "Fever":data.Fever,
 
-            "Cough":data.Cough,
+            "Fever":
+            yes_no(data.Fever),
 
-            "Fatigue":data.Fatigue,
+
+            "Cough":
+            yes_no(data.Cough),
+
+
+            "Fatigue":
+            yes_no(data.Fatigue),
+
 
             "Difficulty Breathing":
-            data.Difficulty_Breathing,
+            yes_no(data.Difficulty_Breathing),
 
-            "Age":data.Age,
 
-            "Gender":data.Gender,
+            "Age":
+            data.Age,
+
+
+            "Gender":
+            data.Gender,
+
 
             "Blood Pressure":
             data.Blood_Pressure,
 
+
             "Cholesterol Level":
             data.Cholesterol_Level,
 
-            "Outcome Variable":
-            data.Outcome_Variable
 
-        }])
+            "Outcome Variable":
+            0
+
+        }
+
+
+
+
+        df = pd.DataFrame([input_data])
+
+
+
+
+        # apply saved encoders
+
+        for column, encoder in feature_encoders.items():
+
+
+            if column in df.columns:
+
+
+                try:
+
+
+                    df[column] = encoder.transform(
+
+                        df[column]
+
+                    )
+
+
+                except Exception as e:
+
+
+                    print(
+
+                        "Encoder skipped:",
+
+                        column,
+
+                        e
+
+                    )
+
+
+
+
+
+        print("FINAL MODEL INPUT")
+
+        print(df)
+
 
 
 
@@ -332,70 +511,24 @@ def predict(data:PredictionInput):
 
 
 
+
         print(
+
             "MODEL OUTPUT:",
+
             result
+
         )
 
 
 
-        encoder = None
 
 
+        disease = disease_encoder.inverse_transform(
 
-        if isinstance(encoders, dict):
+            result
 
-
-            for key,value in encoders.items():
-
-
-                if hasattr(value,"inverse_transform"):
-
-
-                    encoder=value
-
-                    print(
-                        "Using encoder:",
-                        key
-                    )
-
-                    break
-
-
-
-
-        if encoder:
-
-
-            try:
-
-
-                disease = encoder.inverse_transform(
-                    result
-                )[0]
-
-
-
-            except Exception as e:
-
-
-                print(
-                    "Encoder error:",
-                    e
-                )
-
-
-                disease = "Unknown disease"
-
-
-
-
-        else:
-
-
-            disease = str(
-                result[0]
-            )
+        )[0]
 
 
 
@@ -405,9 +538,13 @@ def predict(data:PredictionInput):
 
 
             "prediction":
+
             disease
 
+
         }
+
+
 
 
 
@@ -417,8 +554,11 @@ def predict(data:PredictionInput):
 
 
         print(
+
             "Prediction error:",
+
             e
+
         )
 
 
@@ -426,7 +566,9 @@ def predict(data:PredictionInput):
 
 
             "error":
+
             "Prediction service unavailable"
+
 
         }
 
@@ -445,8 +587,8 @@ def predict(data:PredictionInput):
 
 @app.post("/report")
 
-async def report(file:UploadFile=File(...)):
 
+async def report(file:UploadFile=File(...)):
 
 
     path="report.pdf"
@@ -457,16 +599,18 @@ async def report(file:UploadFile=File(...)):
 
 
         f.write(
+
             await file.read()
+
         )
 
 
 
-    analysis = analyze_report(path)
+    result = analyze_report(path)
 
 
 
-    return analysis
+    return result
 
 
 
@@ -484,6 +628,7 @@ async def report(file:UploadFile=File(...)):
 
 @app.post("/chat")
 
+
 def chat(data:ChatRequest):
 
 
@@ -491,17 +636,23 @@ def chat(data:ChatRequest):
 
 
         answer = medical_chat(
+
             data.message
+
         )
+
 
 
         return {
 
 
             "response":
+
             answer
 
+
         }
+
 
 
 
@@ -511,11 +662,14 @@ def chat(data:ChatRequest):
         print(e)
 
 
+
         return {
 
 
             "response":
+
             "AI service unavailable"
+
 
         }
 
@@ -534,8 +688,8 @@ def chat(data:ChatRequest):
 
 @app.get("/voice")
 
-def voice():
 
+def voice():
 
 
     if not VOICE_AVAILABLE:
@@ -545,25 +699,29 @@ def voice():
 
 
             "error":
+
             "Voice service unavailable"
+
 
         }
 
 
 
 
-    question,lang = speech_to_text()
+    question, lang = speech_to_text()
 
 
 
     answer = medical_chat(
+
         question
+
     )
 
 
 
 
-    if lang!="en":
+    if lang != "en":
 
 
         answer = translate_text(
@@ -577,9 +735,14 @@ def voice():
 
 
 
+
     text_to_speech(
+
         answer
+
     )
+
+
 
 
 
@@ -587,10 +750,14 @@ def voice():
 
 
         "question":
+
         question,
 
 
+
         "answer":
+
         answer
+
 
     }

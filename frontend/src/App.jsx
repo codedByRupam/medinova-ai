@@ -8,6 +8,7 @@ import Prediction from "./pages/Prediction";
 import Report from "./pages/Report";
 import Voice from "./pages/Voice";
 import Register from "./pages/Register";
+import Login from "./pages/Login";
 
 
 function App(){
@@ -29,7 +30,7 @@ path="/register"
 element={<Register/>}
 />
 
-
+<Route path="/login" element={<Login/>}/>
 
 <Route 
 path="/doctor" 

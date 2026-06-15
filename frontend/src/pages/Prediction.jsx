@@ -1,4 +1,4 @@
-import {useState} from "react";
+import { useState } from "react";
 import api from "../api";
 import "./Prediction.css";
 
@@ -6,53 +6,102 @@ import "./Prediction.css";
 export default function Prediction(){
 
 
-const [data,setData]=useState({
+const [data,setData] = useState({
 
-Fever:0,
-Cough:0,
-Fatigue:0,
-Difficulty_Breathing:0,
-Age:20,
-Gender:0,
-Blood_Pressure:120,
-Cholesterol_Level:200,
-Outcome_Variable:0
+    Fever:"No",
+
+    Cough:"No",
+
+    Fatigue:"No",
+
+    Difficulty_Breathing:"No",
+
+    Age:20,
+
+    Gender:"Male",
+
+    Blood_Pressure:"Normal",
+
+    Cholesterol_Level:"Normal"
 
 });
 
 
-const [result,setResult]=useState("");
+const [result,setResult] = useState("");
+
+const [loading,setLoading] = useState(false);
+
 
 
 
 function change(e){
 
+
 setData({
 
-...data,
+    ...data,
 
-[e.target.name]:e.target.value
+    [e.target.name]:e.target.value
 
-})
+});
 
 
 }
+
+
+
 
 
 
 async function predict(){
 
 
-let res=await api.post(
-"/predict",
-data
+try{
+
+
+setLoading(true);
+
+
+const res = await api.post(
+
+    "/predict",
+
+    data
+
 );
+
+
+
+console.log(res.data);
+
+
+
+setResult(res.data.prediction);
+
+
+
+}
+
+catch(error){
+
+
+console.log(error);
 
 
 setResult(
-res.data.predicted_disease
+    "AI service unavailable"
 );
 
+
+}
+
+finally{
+
+
+setLoading(false);
+
+
+}
 
 
 }
@@ -61,7 +110,11 @@ res.data.predicted_disease
 
 
 
+
+
+
 return(
+
 
 <div className="prediction">
 
@@ -72,17 +125,143 @@ return(
 
 
 
-{
-Object.keys(data).map((x)=>(
+<div className="form-card">
+
+
+
+<label>
+Fever
+</label>
+
+<select
+
+name="Fever"
+
+value={data.Fever}
+
+onChange={change}
+
+>
+
+<option value="Yes">
+Yes
+</option>
+
+<option value="No">
+No
+</option>
+
+</select>
+
+
+
+
+
+
+<label>
+Cough
+</label>
+
+<select
+
+name="Cough"
+
+value={data.Cough}
+
+onChange={change}
+
+>
+
+<option value="Yes">
+Yes
+</option>
+
+<option value="No">
+No
+</option>
+
+</select>
+
+
+
+
+
+
+<label>
+Fatigue
+</label>
+
+
+<select
+
+name="Fatigue"
+
+value={data.Fatigue}
+
+onChange={change}
+
+>
+
+<option value="Yes">
+Yes
+</option>
+
+<option value="No">
+No
+</option>
+
+</select>
+
+
+
+
+
+
+
+<label>
+Difficulty Breathing
+</label>
+
+
+<select
+
+name="Difficulty_Breathing"
+
+value={data.Difficulty_Breathing}
+
+onChange={change}
+
+>
+
+<option value="Yes">
+Yes
+</option>
+
+<option value="No">
+No
+</option>
+
+</select>
+
+
+
+
+
+
+
+
+<label>
+Age
+</label>
 
 
 <input
 
-key={x}
+type="number"
 
-name={x}
+name="Age"
 
-placeholder={x}
+value={data.Age}
 
 onChange={change}
 
@@ -90,22 +269,187 @@ onChange={change}
 
 
 
-))
 
+
+
+
+
+<label>
+Gender
+</label>
+
+
+<select
+
+name="Gender"
+
+value={data.Gender}
+
+onChange={change}
+
+>
+
+<option value="Male">
+Male
+</option>
+
+<option value="Female">
+Female
+</option>
+
+
+</select>
+
+
+
+
+
+
+
+
+
+<label>
+Blood Pressure
+</label>
+
+
+<select
+
+name="Blood_Pressure"
+
+value={data.Blood_Pressure}
+
+onChange={change}
+
+>
+
+
+<option value="Normal">
+Normal
+</option>
+
+
+<option value="High">
+High
+</option>
+
+
+<option value="Low">
+Low
+</option>
+
+
+</select>
+
+
+
+
+
+
+
+
+
+<label>
+Cholesterol Level
+</label>
+
+
+<select
+
+name="Cholesterol_Level"
+
+value={data.Cholesterol_Level}
+
+onChange={change}
+
+>
+
+
+<option value="Normal">
+Normal
+</option>
+
+
+<option value="High">
+High
+</option>
+
+
+<option value="Low">
+Low
+</option>
+
+
+</select>
+
+
+
+
+
+
+
+
+<button
+
+onClick={predict}
+
+disabled={loading}
+
+>
+
+
+{
+
+loading
+
+?
+
+"Analyzing..."
+
+:
+
+"Predict Disease"
 
 }
 
 
-
-<button onClick={predict}>
-Predict
 </button>
 
 
 
+
+
+</div>
+
+
+
+
+
+
+
+
+{
+
+result &&
+
+<div className="result-card">
+
+
 <h2>
-{result}
+Prediction Result
 </h2>
+
+
+<p>
+🩺 {result}
+</p>
+
+
+</div>
+
+
+}
+
 
 
 </div>
