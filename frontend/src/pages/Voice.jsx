@@ -9,7 +9,7 @@ function talk(){
 
 axios.get(
 
-"http://localhost:8000/voice"
+"/voice"
 
 )
 

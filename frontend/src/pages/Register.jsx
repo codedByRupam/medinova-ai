@@ -1,26 +1,26 @@
 import {useState} from "react";
 
-import axios from "axios";
-
 import {useNavigate} from "react-router-dom";
 
+import api from "../api";   // adjust path if your api.js location is different
 
 
 export default function Register(){
 
 
-const nav=useNavigate();
+const nav = useNavigate();
 
 
-const [data,setData]=useState({});
+const [data,setData] = useState({});
+
 
 
 function register(){
 
 
-axios.post(
+api.post(
 
-"http://localhost:8000/register",
+"/register",
 
 data
 
@@ -35,6 +35,15 @@ nav("/login");
 
 
 })
+
+
+.catch((err)=>{
+
+console.log(err);
+
+alert("Registration failed");
+
+});
 
 
 }
@@ -52,20 +61,27 @@ Create Account
 </h1>
 
 
+
 <input
+
 placeholder="Name"
+
 onChange={
 e=>setData({...data,name:e.target.value})
 }
+
 />
 
 
 
 <input
+
 placeholder="Email"
+
 onChange={
 e=>setData({...data,email:e.target.value})
 }
+
 />
 
 
@@ -81,6 +97,7 @@ e=>setData({...data,password:e.target.value})
 }
 
 />
+
 
 
 <button onClick={register}>
